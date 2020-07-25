@@ -35,7 +35,7 @@ def _get_valid_proxies_query():
 
 @app.route('/api/v1/proxies')
 async def api_v1_proxies(request: Request):
-    args = request.raw_args
+    args = request.get_args()
 
     limit = 20
 
@@ -44,15 +44,15 @@ async def api_v1_proxies(request: Request):
     is_anonymous = 2  # 0: no, 1: yes, 2: any
 
     if 'limit' in args:
-        int_limit = _parse_str_to_int(args['limit'])
+        int_limit = _parse_str_to_int(args['limit'][0])
         limit = int_limit if int_limit else 20
 
     if 'page' in args:
-        int_page = _parse_str_to_int(args['page'])
+        int_page = _parse_str_to_int(args['page'][0])
         page = int_page if int_page > 0 else 1
 
     if 'anonymous' in args:
-        str_anonymous = args['anonymous']
+        str_anonymous = args['anonymous'][0]
         if str_anonymous == 'true':
             is_anonymous = 1
         elif str_anonymous == 'false':
@@ -62,11 +62,11 @@ async def api_v1_proxies(request: Request):
 
     str_https = None
     if 'https' in args:
-        str_https = args['https']
+        str_https = args['https'][0]
 
     country_list = []
     if 'countries' in args:
-        countries = args['countries']
+        countries = args['countries'][0]
         country_list = countries.split(',')
 
     proxy_initial_query = _get_valid_proxies_query()
@@ -97,7 +97,11 @@ async def api_v1_proxies(request: Request):
     proxy_list = []
 
     for p in proxies:
-        proxy_list.append(model_to_dict(p))
+        pp = model_to_dict(p)
+        pp['created_at'] = pp['created_at'].timestamp()
+        pp['updated_at'] = pp['updated_at'].timestamp()
+        proxy_list.append(pp)
+
 
     return json({
         'proxies': proxy_list,
